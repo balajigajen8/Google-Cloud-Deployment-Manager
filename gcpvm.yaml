@@ -1,0 +1,55 @@
+resources:
+- name: my-gcp-deployment-vm
+  type: compute.v1.instance
+  properties:
+    zone: us-central1-b
+    machineType: projects/sapspecific/zones/us-central1-b/machineTypes/n1-standard-1
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: projects/debian-cloud/global/images/family/debian-10
+        sizeGb: 10
+    - deviceName: deployment-disk
+      type: PERSISTENT
+      boot: false
+      autoDelete: true
+      initializeParams:
+        diskName: deployment-disk
+        diskSizeGb: 10
+    networkInterfaces:
+    - network: global/networks/default
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash -e
+          apt update && apt -y install nginx-light
+    tags:
+      items:
+      - http-server
+    tags:
+      items:
+      - https-server
+- name: my-gcp-deployment-vm-tcp-80
+  type: compute.v1.firewall
+  properties:
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 80
+    network: global/networks/default
+    sourceRanges:
+    - 0.0.0.0/0
+    targetTags:
+    - http-server
+    tags:
+      items:
+      - http-server
+
+
